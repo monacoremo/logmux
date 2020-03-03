@@ -38,3 +38,11 @@ It's also possible to set the color of the label:
 logmux "first.log?label=custom&color=blue" "second.log?color=red" test/third.log
 
 ```
+
+# Similar solutions
+
+In no particular order:
+
+* [MultiTail](https://www.vanheusden.com/multitail/) uses ncurses to tail multiple
+  log files in one or more windows. Logmux takes a more simple approach by just
+  printing to stdout.
