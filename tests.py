@@ -47,10 +47,8 @@ def test_basics():
         print(logpaths)
         with logmux_process(logpaths) as proc:
             appendfile(logpaths[0], b'test line 1\n')
-            assert proc.stdout.readline() == b'log1: test line 1\n'
-
             appendfile(logpaths[0], b'test line 2\n')
-            assert proc.stdout.readline() == b'log1: test line 2\n'
+            assert proc.stdout.readline() == b'log1: test line 1\n'
 
 
 
