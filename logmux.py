@@ -1,7 +1,7 @@
-'''
+"""
 Tail multiple log files and label their lines.
 
-'''
+"""
 
 from contextlib import contextmanager, ExitStack
 from collections import namedtuple
@@ -14,24 +14,24 @@ import fcntl
 import os
 
 
-LogFile = namedtuple('LogFile', 'pipe config')
-LogFileConfig = namedtuple('LogFileConfig', 'path color label')
+LogFile = namedtuple("LogFile", "pipe config")
+LogFileConfig = namedtuple("LogFileConfig", "path color label")
 
 
-COLORS = '''
+COLORS = """
     red green yellow blue magenta cyan white black bright_red bright_green
     bright_yellow bright_blue bright_magenta bright_cyan bright_white
     bright_black
-'''.strip().split()
+""".strip().split()
 
 
 @click.command()
-@click.argument('logpath', nargs=-1)
-@click.option('-l', '--list-colors', is_flag=True, default=False)
-@click.option('--colorize-labels/--no-colorize-labels', default=True)
-@click.option('--verbose/--quiet', default=False)
+@click.argument("logpath", nargs=-1)
+@click.option("-l", "--list-colors", is_flag=True, default=False)
+@click.option("--colorize-labels/--no-colorize-labels", default=True)
+@click.option("--verbose/--quiet", default=False)
 def main(logpath, list_colors=False, colorize_labels=True, verbose=False):
-    '''
+    """
     Tail all LOGPATH(s), label their lines and output them in one stream.
 
     Each path can be configured using query arguments, e.g.:
@@ -45,13 +45,12 @@ def main(logpath, list_colors=False, colorize_labels=True, verbose=False):
 
         color: Color of the label. Add "-l" to list the available colors.
 
-    '''
-
+    """
 
     if list_colors:
-        click.echo('The following colors are available:', err=True)
+        click.echo("The following colors are available:", err=True)
         for color in COLORS:
-            click.secho('    ' + color, fg=color, err=True)
+            click.secho("    " + color, fg=color, err=True)
         return
 
     logfiles = {}
@@ -83,7 +82,7 @@ def main(logpath, list_colors=False, colorize_labels=True, verbose=False):
             poll.register(logfile.pipe)
 
         if verbose:
-            click.echo(f'Tailing {len(logfiles)} file(s)...', err=True)
+            click.echo(f"Tailing {len(logfiles)} file(s)...", err=True)
 
         while True:
             for fd, event in poll.poll():
@@ -111,9 +110,9 @@ def main(logpath, list_colors=False, colorize_labels=True, verbose=False):
 
 @contextmanager
 def tail(path):
-    'Returns a file-like object that tails the file at the given path.'
+    "Returns a file-like object that tails the file at the given path."
 
-    command = ['stdbuf', '-oL', 'tail', '-F', '--lines=0', path]
+    command = ["stdbuf", "-oL", "tail", "-F", "--lines=0", path]
 
     with subprocess.Popen(command, stdout=subprocess.PIPE) as process:
         set_nonblocking(process.stdout)
@@ -121,41 +120,38 @@ def tail(path):
 
 
 def set_nonblocking(fd):
-    'Set a file descriptior or file-like object to be non-blocking.'
+    "Set a file descriptior or file-like object to be non-blocking."
 
     fl = fcntl.fcntl(fd, fcntl.F_GETFL)
     fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
 
 def logfileconfig(path):
-    'Parse a log path with optional configuration in query arguments.'
+    "Parse a log path with optional configuration in query arguments."
 
     result = urlparse(path)
 
     if any([result.scheme, result.netloc, result.params, result.fragment]):
-        raise ValueError('Only regular files are supported.')
+        raise ValueError("Only regular files are supported.")
 
-    label = result.path.split('/')[-1].split('.')[0]
+    label = result.path.split("/")[-1].split(".")[0]
     color = None
 
     for option, value in parse_qsl(result.query):
-        if option == 'color':
+        if option == "color":
             if value not in COLORS:
                 raise ValueError(
                     f'Invalid color: "{value}".'
                     ' Add "-l" to list the available colors.'
                 )
             color = value
-        elif option == 'label':
+        elif option == "label":
             label = value
         else:
-            raise ValueError(
-                f'Invalid option: "{option}".'
-                ' Use "label" or "color".'
-            )
+            raise ValueError(f'Invalid option: "{option}".' ' Use "label" or "color".')
 
     return LogFileConfig(path=result.path, color=color, label=label)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
